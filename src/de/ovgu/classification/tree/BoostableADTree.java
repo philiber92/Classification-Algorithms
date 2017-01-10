@@ -51,12 +51,12 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
         return rootNode;
     }
 
-    class PredictionNode implements de.ovgu.classification.tree.PredictionNode<PredictionType> {
+    public class PredictionNode implements de.ovgu.classification.tree.PredictionNode<PredictionType> {
 
         private final PredictionType _prediction;
         private Optional<de.ovgu.classification.tree.SplitterNode<PredictionType>> _splitter;
 
-        PredictionNode(PredictionType prediction) {
+        public PredictionNode(PredictionType prediction) {
             this(prediction, null);
         }
 
@@ -118,15 +118,19 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
         }
     }
 
-    class SplitterNode implements de.ovgu.classification.tree.SplitterNode<PredictionType> {
+    public class SplitterNode implements de.ovgu.classification.tree.SplitterNode<PredictionType> {
 
         private final Condition _condition;
         private final PredictionNode _truePrediction, _falsePrediction;
 
-        SplitterNode(Condition condition, PredictionNode truePrediction, PredictionNode falsePrediction) {
+        public SplitterNode(Condition condition, PredictionNode truePrediction, PredictionNode falsePrediction) {
             _condition = condition;
             _truePrediction = truePrediction;
             _falsePrediction = falsePrediction;
+        }
+        
+        public SplitterNode(Condition condition, PredictionType truePrediction, PredictionType falsePrediction) {
+        	this(condition, new PredictionNode(truePrediction), new PredictionNode(falsePrediction));
         }
 
         @Override

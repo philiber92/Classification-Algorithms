@@ -9,7 +9,7 @@ public class Condition {
     private int _dimensionIndex;
     private double _value;
 
-    enum ConditionType {
+    public enum ConditionType {
         EQUAL,
         GREATER,
         LESS,
@@ -40,6 +40,10 @@ public class Condition {
 
     public int getDimension() {
         return _dimensionIndex;
+    }
+    
+    public static Condition create(double value, int dimensionIndex, ConditionType conditionType) {
+    	return new Condition(value, dimensionIndex, conditionType);
     }
 
 

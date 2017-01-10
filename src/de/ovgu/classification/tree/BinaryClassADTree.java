@@ -55,6 +55,20 @@ public class BinaryClassADTree extends BoostableADTree<Vector<Double>, Double> {
         _negativeLabel = labels.get(1);
         boostStrategy.boost(this, instances, iterations);
     }
+    
+    public de.ovgu.classification.tree.PredictionNode<Double> simulatePrediction(Instance<Vector<Double>> instance) {
+    	de.ovgu.classification.tree.PredictionNode<Double> currentNode = rootNode.get();
+        while(true) {
+        	if(!currentNode.hasSplitter()) {
+        		return currentNode;
+        	}
+        	de.ovgu.classification.tree.SplitterNode<Double> splitter = currentNode.getSplitter().get();
+            final Condition condition = splitter.getCondition();
+            final int dimension = condition.getDimension();
+            currentNode = (condition.check(instance.getData().get(dimension)))
+            		? (de.ovgu.classification.tree.PredictionNode<Double>) splitter.getTruePrediction() : (de.ovgu.classification.tree.PredictionNode<Double>) splitter.getFalsePrediction();
+        }
+    }
 
     public int getPositiveLabel() {
         return _positiveLabel;
