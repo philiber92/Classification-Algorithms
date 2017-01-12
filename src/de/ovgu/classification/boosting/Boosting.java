@@ -1,7 +1,7 @@
 package de.ovgu.classification.boosting;
 
 import de.ovgu.classification.parser.Instances;
-import de.ovgu.classification.tree.BinaryClassADTree;
+import de.ovgu.classification.tree.BoostableADTree;
 
 /**
  * Main interface for all possible boosting algorithms.
@@ -17,6 +17,5 @@ public interface Boosting<Input, PredictionType> {
      * @param instances training data
      * @param iterations max iterations
      */
-    void boost(BinaryClassADTree tree, Instances<Input> instances, int iterations);
-
+    void boost(BoostableADTree<Input, PredictionType> tree, Instances<Input> instances, int iterations);
 }

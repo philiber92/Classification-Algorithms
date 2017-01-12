@@ -24,4 +24,16 @@ public interface SplitterNode<PredictionType> {
      * @return
      */
     PredictionNode<PredictionType> getFalsePrediction();
+    
+    /**
+     * 
+     * @param value
+     */
+    void setTrueValue(PredictionType value);
+    
+    /**
+     * 
+     * @param value
+     */
+    void setFalseValue(PredictionType value);
 }

@@ -11,7 +11,7 @@ import de.ovgu.classification.parser.Instances;
  *
  * @author Philipp Bergt
  */
-public class MultiClassADTree extends BoostableADTree<Vector, Vector> {
+public class MultiClassADTree extends BoostableADTree<Vector<Double>, Vector<Double>> {
 
     /**
      *
@@ -21,23 +21,29 @@ public class MultiClassADTree extends BoostableADTree<Vector, Vector> {
         boostStrategy = new LTBoost();
     }
 
-    @Override
-    public Instances<Vector> classify(Instances<Vector> instances) {
-        return null;
-    }
+	@Override
+	public Instances<Vector<Double>> classify(Instances<Vector<Double>> instances) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public Instance<Vector> classify(Instance<Vector> instance) {
-        return null;
-    }
+	@Override
+	public Instance<Vector<Double>> classify(Instance<Vector<Double>> instance) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public Vector simulate(Instance<Vector> instance) {
-        return null;
-    }
+	@Override
+	public Vector<Double> simulate(Instance<Vector<Double>> instance) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 
-    @Override
-    public void train(Instances instances, int iterations) {
+	@Override
+	public void train(Instances<Vector<Double>> instances, int iterations) {
+		// TODO Auto-generated method stub
+		
+	}
 
-    }
+
 }

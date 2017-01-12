@@ -13,60 +13,60 @@ import de.ovgu.classification.util.Condition;
  */
 public abstract class BoostableADTree<Input, PredictionType> implements ADTree<Input, PredictionType>{
 
-    protected Optional<de.ovgu.classification.tree.PredictionNode> rootNode;
-    protected Boosting boostStrategy;
+    protected Optional<PredictionNode<PredictionType>> rootNode;
+    protected Boosting<Input, PredictionType> boostStrategy;
 
     public BoostableADTree() {
         rootNode = Optional.empty();
     }
 
-    public BoostableADTree(PredictionNode predictionNode) {
+    public BoostableADTree(BoostPredictionNode predictionNode) {
         rootNode = Optional.of(predictionNode);
     }
 
-    public abstract void train(Instances instances, int iterations);
+    public abstract void train(Instances<Input> instances, int iterations);
 
-    public List<PredictionNode> getAllLeaves() {
-        PredictionNode predictionNode = (PredictionNode) rootNode
+    public List<BoostPredictionNode> getAllLeaves() {
+        BoostPredictionNode predictionNode = (BoostPredictionNode) rootNode
                 .orElseThrow(() -> new RuntimeException("Tree isn't set!"));
         return predictionNode.getAllLeaves();
     }
 
-    public void setBoostStrategy(Boosting boosting) {
+    public void setBoostStrategy(Boosting<Input, PredictionType> boosting) {
         boostStrategy = boosting;
     }
 
     @Override
-    public void setRoot(de.ovgu.classification.tree.PredictionNode predictionNode) {
+    public void setRoot(PredictionNode<PredictionType> predictionNode) {
         rootNode = Optional.of(predictionNode);
     }
 
     @Override
     public void setRootPrediction(PredictionType prediction) {
-        setRoot(new PredictionNode(prediction));
+        setRoot(new BoostPredictionNode(prediction));
     }
 
     @Override
-    public Optional<de.ovgu.classification.tree.PredictionNode> getRootPrediction() {
+    public Optional<PredictionNode<PredictionType>> getRootPrediction() {
         return rootNode;
     }
 
-    public class PredictionNode implements de.ovgu.classification.tree.PredictionNode<PredictionType> {
+    public class BoostPredictionNode implements PredictionNode<PredictionType> {
 
         private final PredictionType _prediction;
-        private Optional<de.ovgu.classification.tree.SplitterNode<PredictionType>> _splitter;
+        private Optional<SplitterNode<PredictionType>> _splitter;
 
-        public PredictionNode(PredictionType prediction) {
+        public BoostPredictionNode(PredictionType prediction) {
             this(prediction, null);
         }
 
-        PredictionNode(PredictionType prediction, SplitterNode splitterNode) {
+        BoostPredictionNode(PredictionType prediction, BoostSplitterNode splitterNode) {
             _prediction = prediction;
             setSplitter(splitterNode);
         }
 
         @Override
-        public void setSplitter(de.ovgu.classification.tree.SplitterNode<PredictionType> splitter) {
+        public void setSplitter(SplitterNode<PredictionType> splitter) {
             _splitter = Optional.ofNullable(splitter);
         }
 
@@ -76,7 +76,7 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
         }
 
         @Override
-        public Optional<de.ovgu.classification.tree.SplitterNode<PredictionType>> getSplitter() {
+        public Optional<SplitterNode<PredictionType>> getSplitter() {
             return _splitter;
         }
 
@@ -90,7 +90,7 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
          *
          * @return list containing all currently set leaves
          */
-        public List<PredictionNode> getAllLeaves() {
+        public List<BoostPredictionNode> getAllLeaves() {
             return collectFreePredictions(this);
         }
 
@@ -100,12 +100,12 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
          * @param predictionNode start node
          * @return list containing all 'splitter-free' predictions
          */
-        private List<PredictionNode> collectFreePredictions(final PredictionNode predictionNode) {
-            final ArrayList<PredictionNode> list = new ArrayList<>();
+        private List<BoostPredictionNode> collectFreePredictions(final BoostPredictionNode predictionNode) {
+            final ArrayList<BoostPredictionNode> list = new ArrayList<>();
             if(hasSplitter()) {
-                final SplitterNode splitter = (SplitterNode) _splitter.get();
-                list.addAll(collectFreePredictions((PredictionNode) splitter.getTruePrediction()));
-                list.addAll(collectFreePredictions((PredictionNode) splitter.getFalsePrediction()));
+                final BoostSplitterNode splitter = (BoostSplitterNode) _splitter.get();
+                list.addAll(collectFreePredictions((BoostPredictionNode) splitter.getTruePrediction()));
+                list.addAll(collectFreePredictions((BoostPredictionNode) splitter.getFalsePrediction()));
                 return list;
             }
             list.add(predictionNode);
@@ -116,21 +116,26 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
 //                list.addAll(search((PredictionNode) sp.getTruePrediction()));
 //            }).ifNotPresent(...);
         }
+
+		@Override
+		public void removeSplitter() {
+			_splitter = Optional.empty();
+		}
     }
 
-    public class SplitterNode implements de.ovgu.classification.tree.SplitterNode<PredictionType> {
+    public class BoostSplitterNode implements SplitterNode<PredictionType> {
 
         private final Condition _condition;
-        private final PredictionNode _truePrediction, _falsePrediction;
+        private BoostPredictionNode _truePrediction, _falsePrediction;
 
-        public SplitterNode(Condition condition, PredictionNode truePrediction, PredictionNode falsePrediction) {
+        public BoostSplitterNode(Condition condition, BoostPredictionNode truePrediction, BoostPredictionNode falsePrediction) {
             _condition = condition;
             _truePrediction = truePrediction;
             _falsePrediction = falsePrediction;
         }
         
-        public SplitterNode(Condition condition, PredictionType truePrediction, PredictionType falsePrediction) {
-        	this(condition, new PredictionNode(truePrediction), new PredictionNode(falsePrediction));
+        public BoostSplitterNode(Condition condition, PredictionType truePrediction, PredictionType falsePrediction) {
+        	this(condition, new BoostPredictionNode(truePrediction), new BoostPredictionNode(falsePrediction));
         }
 
         @Override
@@ -139,13 +144,23 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
         }
 
         @Override
-        public de.ovgu.classification.tree.PredictionNode<PredictionType> getTruePrediction() {
+        public PredictionNode<PredictionType> getTruePrediction() {
             return _truePrediction;
         }
 
         @Override
-        public de.ovgu.classification.tree.PredictionNode<PredictionType> getFalsePrediction() {
+        public PredictionNode<PredictionType> getFalsePrediction() {
             return _falsePrediction;
         }
+
+		@Override
+		public void setTrueValue(PredictionType value) {
+			_truePrediction = new BoostPredictionNode(value);
+		}
+
+		@Override
+		public void setFalseValue(PredictionType value) {
+			_falsePrediction = new BoostPredictionNode(value);
+		}
     }
 }

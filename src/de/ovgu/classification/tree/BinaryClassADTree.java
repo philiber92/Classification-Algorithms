@@ -8,6 +8,7 @@ import de.ovgu.classification.boosting.AdaBoost;
 import de.ovgu.classification.parser.Instance;
 import de.ovgu.classification.parser.Instances;
 import de.ovgu.classification.util.Condition;
+import de.ovgu.classification.util.Tuple;
 
 /**
  * Represents a simple alternating decision tree, which is only able to handle binary class problems.
@@ -24,7 +25,7 @@ public class BinaryClassADTree extends BoostableADTree<Vector<Double>, Double> {
 
     @Override
     public Instances<Vector<Double>> classify(Instances<Vector<Double>> instances) {
-        for(Instance instance : instances) {
+        for(Instance<Vector<Double>> instance : instances) {
             classify(instance);
         }
         return instances;
@@ -43,30 +44,44 @@ public class BinaryClassADTree extends BoostableADTree<Vector<Double>, Double> {
 
     @Override
     public Double simulate(Instance<Vector<Double>> instance) {
-        final PredictionNode root = (PredictionNode) rootNode.get();
+        final BoostPredictionNode root = (BoostPredictionNode) rootNode.get();
         double value = root.getValue();
         return value + simulateSplitter(root.getSplitter(), instance);
     }
+    
+    public Tuple<Instances<Vector<Double>>, Instances<Vector<Double>>> simulateSplitter(Instances<Vector<Double>> instances, BoostSplitterNode splitter) {
+    	final Instances<Vector<Double>> trueInstances = new Instances<>();
+    	final Instances<Vector<Double>> falseInstances = new Instances<>();
+    	for(Instance<Vector<Double>> instance : instances) {
+    		final BoostableADTree<Vector<Double>, Double>.BoostPredictionNode prediction = (BoostableADTree<Vector<Double>, Double>.BoostPredictionNode) simulatePrediction(instance);
+    		if(prediction == splitter.getTruePrediction()) {
+    			trueInstances.add(instance);
+    		} else if(prediction == splitter.getFalsePrediction()) {
+    			falseInstances.add(instance);
+    		}
+    	}
+    	return new Tuple<Instances<Vector<Double>>, Instances<Vector<Double>>>(trueInstances, falseInstances);
+    }
 
     @Override
-    public void train(Instances instances, int iterations) {
+    public void train(Instances<Vector<Double>> instances, int iterations) {
         final List<Integer> labels = instances.getLabels();
         _positiveLabel = labels.get(0);
         _negativeLabel = labels.get(1);
         boostStrategy.boost(this, instances, iterations);
     }
     
-    public de.ovgu.classification.tree.PredictionNode<Double> simulatePrediction(Instance<Vector<Double>> instance) {
-    	de.ovgu.classification.tree.PredictionNode<Double> currentNode = rootNode.get();
+    public PredictionNode<Double> simulatePrediction(Instance<Vector<Double>> instance) {
+    	PredictionNode<Double> currentNode = rootNode.get();
         while(true) {
         	if(!currentNode.hasSplitter()) {
         		return currentNode;
         	}
-        	de.ovgu.classification.tree.SplitterNode<Double> splitter = currentNode.getSplitter().get();
+        	SplitterNode<Double> splitter = currentNode.getSplitter().get();
             final Condition condition = splitter.getCondition();
             final int dimension = condition.getDimension();
             currentNode = (condition.check(instance.getData().get(dimension)))
-            		? (de.ovgu.classification.tree.PredictionNode<Double>) splitter.getTruePrediction() : (de.ovgu.classification.tree.PredictionNode<Double>) splitter.getFalsePrediction();
+            		? (PredictionNode<Double>) splitter.getTruePrediction() : (PredictionNode<Double>) splitter.getFalsePrediction();
         }
     }
 
@@ -78,15 +93,15 @@ public class BinaryClassADTree extends BoostableADTree<Vector<Double>, Double> {
         return _negativeLabel;
     }
 
-    private double simulateSplitter(Optional<de.ovgu.classification.tree.SplitterNode<Double>> splitter, Instance<Vector<Double>> instance) {
+    private double simulateSplitter(Optional<SplitterNode<Double>> splitter, Instance<Vector<Double>> instance) {
         if(!splitter.isPresent()) {
             return 0.0;
         }
-        final de.ovgu.classification.tree.SplitterNode<Double> splitterNode = splitter.get();
+        final SplitterNode<Double> splitterNode = splitter.get();
         final Condition condition = splitterNode.getCondition();
         final int dimension = condition.getDimension();
-        final de.ovgu.classification.tree.PredictionNode<Double> truePrediction = splitterNode.getTruePrediction();
-        final de.ovgu.classification.tree.PredictionNode<Double> falsePrediction = splitterNode.getFalsePrediction();
+        final PredictionNode<Double> truePrediction = splitterNode.getTruePrediction();
+        final PredictionNode<Double> falsePrediction = splitterNode.getFalsePrediction();
 
         return (condition.check(instance.getData().get(dimension)))
                 ? truePrediction.getValue() + simulateSplitter(truePrediction.getSplitter(), instance)

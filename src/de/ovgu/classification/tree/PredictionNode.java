@@ -30,4 +30,9 @@ public interface PredictionNode<PredictionType> {
      * @return
      */
     PredictionType getValue();
+    
+    /**
+     * 
+     */
+    void removeSplitter();
 }

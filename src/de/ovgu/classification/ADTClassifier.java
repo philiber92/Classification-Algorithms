@@ -3,8 +3,6 @@ package de.ovgu.classification;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Vector;
 
 import de.ovgu.classification.tree.BinaryClassADTree;
@@ -27,8 +25,10 @@ public class ADTClassifier {
         Instances train =  arff.getData();
         BufferedReader readerTest =
         		new BufferedReader(new FileReader(args[1]));
+        train.setClassIndex(train.numAttributes() - 1);
         ArffReader arffTest = new ArffReader(readerTest);
         Instances test =  arffTest.getData();
+        test.setClassIndex(test.numAttributes() - 1);
         BinaryClassADTree tree = new BinaryClassADTree();
         tree.train(getInstances(train, true), Integer.valueOf(args[2]));
         de.ovgu.classification.parser.Instances<Vector<Double>> labels = getInstances(test, false);

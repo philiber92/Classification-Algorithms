@@ -40,7 +40,7 @@ public interface ADTree<Input, PredictionType> {
      *
      * @param predictionNode
      */
-    void setRoot(PredictionNode predictionNode);
+    void setRoot(PredictionNode<PredictionType> predictionNode);
 
     /**
      * Simulates given {@link Instance} over the whole pre-trained adtree.
@@ -55,5 +55,5 @@ public interface ADTree<Input, PredictionType> {
      *
      * @return {@link PredictionNode}
      */
-    Optional<PredictionNode> getRootPrediction();
+    Optional<PredictionNode<PredictionType>> getRootPrediction();
 }

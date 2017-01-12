@@ -1,5 +1,6 @@
 package de.ovgu.classification.boosting;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -9,10 +10,9 @@ import de.ovgu.classification.parser.Instance;
 import de.ovgu.classification.parser.Instances;
 import de.ovgu.classification.tree.BinaryClassADTree;
 import de.ovgu.classification.tree.BoostableADTree;
-import de.ovgu.classification.tree.BoostableADTree.SplitterNode;
 import de.ovgu.classification.tree.PredictionNode;
+import de.ovgu.classification.tree.SplitterNode;
 import de.ovgu.classification.util.*;
-import de.ovgu.classification.util.Condition.ConditionType;
 
 /**
  * Represents the basic AdaBoost algorithm, which it's able to classify binary problems.
@@ -23,20 +23,21 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
 
     private Instances<Vector<Double>> _instances;
     private BinaryClassADTree _adTree;
-    private Map<Instance, Double> _weights;
+    private Map<Instance<Vector<Double>>, Double> _weights;
     private List<Condition> _conditions;
     private int _iterations;
     private int _positiveLabel, _negativeLabel;
 
     @Override
-    public void boost(BinaryClassADTree tree, Instances<Vector<Double>> instances, int iterations) {
+    public void boost(BoostableADTree<Vector<Double>, Double> tree, Instances<Vector<Double>> instances, int iterations) {
         if(instances.countClasses() != 2)
-            throw new RuntimeException("AdaBoost is only able two handle binary class problems!");
+            throw new RuntimeException("AdaBoost is only able to handle binary class problems!");
         if(iterations <= 0)
-            throw new RuntimeException("Number of iterations must be greater or equal than one!");
+            throw new RuntimeException("Number of iterations must be greater than or equal to one!");
         _instances = instances;
-        _adTree = tree;
+        _adTree = (BinaryClassADTree) tree;
         _iterations = iterations;
+        _conditions = new ArrayList<>();
         init();
     }
 
@@ -69,6 +70,7 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     
     private void initConditions() {
     	int dimensions = _instances.countDimensions();
+    	int test = _instances.size();
     	for(Instance<Vector<Double>> instance : _instances) {
     		Vector<Double> instanceData = instance.getData();
     		for(int i = 0; i < dimensions; i++) {
@@ -82,17 +84,57 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     
     private void boost() {
     	for(int i = 0; i < _iterations; i++) {
-    		List<BoostableADTree<Vector<Double>, Double>.PredictionNode> leaves = _adTree.getAllLeaves();
+    		addLeafToTree();
     	}
     }
     
-    private void checkLeave(de.ovgu.classification.tree.BoostableADTree.PredictionNode node) {
-    	final Condition condition = new Condition(0, 0, ConditionType.GREATER);
-    	//final SplitterNode splitter = new SplitterNode(condition, truePrediction, falsePrediction);
+    private void addLeafToTree() {
+		List<BoostableADTree<Vector<Double>, Double>.BoostPredictionNode> leaves = _adTree.getAllLeaves();
+		double z = Double.MAX_VALUE;
+		Condition minCondition = null;
+		PredictionNode<Double> minPrediction = null;
+		for(BoostableADTree<Vector<Double>, Double>.BoostPredictionNode leaf : leaves) {
+	    	for(Condition condition : _conditions) {
+	    		leaf.setSplitter(_adTree.new BoostSplitterNode(condition, 0.0, 0.0));
+	    		if(calculateRating(leaf.getSplitter().get()) < z) {
+	    			minCondition = condition;
+	    			minPrediction = leaf;
+	    		}
+	    		
+	    	}
+	    	leaf.removeSplitter();
+		}
+		setSplitterByCondition(minPrediction, minCondition);
+    }
+    
+    private void setSplitterByCondition(PredictionNode<Double> node, Condition condition) {
+		node.setSplitter(_adTree.new BoostSplitterNode(condition, 0.0, 0.0));
+		SplitterNode<Double> splitter = node.getSplitter().get();
+    	Tuple<Instances<Vector<Double>>, Instances<Vector<Double>>> result = _adTree.simulateSplitter(_instances, (BoostableADTree<Vector<Double>, Double>.BoostSplitterNode) splitter);
+    	double positiveTrue = getPositiveWeightSum(result.getFirst());
+    	double negativeTrue = getNegativeWeightSum(result.getSecond());
+    	double positiveFalse = getPositiveWeightSum(result.getSecond());
+    	double negativeFalse =  getNegativeWeightSum(result.getSecond());
+    	double a1 = 0.5 * Math.exp((positiveTrue+1.0)/(negativeTrue+1.0));
+    	double a2 = 0.5 * Math.exp((positiveFalse+1.0)/(negativeFalse+1.0));
+    	splitter.setTrueValue(a1);
+    	splitter.setFalseValue(a2);
+    }
+    
+    private double calculateRating(SplitterNode<Double> splitter) {
+    	Tuple<Instances<Vector<Double>>, Instances<Vector<Double>>> result = _adTree.simulateSplitter(_instances, (BoostableADTree<Vector<Double>, Double>.BoostSplitterNode) splitter);
+    	double positiveTrue = getPositiveWeightSum(result.getFirst());
+    	double negativeTrue = getNegativeWeightSum(result.getSecond());
+    	double positiveFalse = getPositiveWeightSum(result.getSecond());
+    	double negativeFalse =  getNegativeWeightSum(result.getSecond());
+    	Instances<Vector<Double>> remaining = new Instances<>(_instances);
+    	remaining.removeAll(result.getFirst());
+    	remaining.removeAll(result.getSecond());
+    	return 2 * (Math.sqrt(positiveTrue*negativeTrue) + Math.sqrt(positiveFalse*negativeFalse) + getWeightSum(remaining));
     }
 
     private void updateWeights() {
-        for(Instance instance : _instances) {
+        for(Instance<Vector<Double>> instance : _instances) {
         	double value = _weights.get(instance);
         	int y = (instance.getLabel() == _positiveLabel) ? 1 : -1;
         	value = value * Math.exp(-y*_adTree.simulate(instance));
@@ -102,7 +144,7 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     
     private double getPositiveWeightSum(Instances<Vector<Double>> instances) {
     	double value = 0.0;
-    	for(Instance instance : instances) {
+    	for(Instance<Vector<Double>> instance : instances) {
     		if(instance.getLabel() == _positiveLabel) {
     			value += _weights.get(instance);
     		}
@@ -112,7 +154,7 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     
     private double getNegativeWeightSum(Instances<Vector<Double>> instances) {
     	double value = 0.0;
-    	for(Instance instance : instances) {
+    	for(Instance<Vector<Double>> instance : instances) {
     		if(instance.getLabel() == _negativeLabel) {
     			value += _weights.get(instance);
     		}
@@ -123,8 +165,5 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     private double getWeightSum(Instances<Vector<Double>> instances) {
     	return getPositiveWeightSum(instances) + getNegativeWeightSum(instances);
     }
-    
-    
-
 }
 

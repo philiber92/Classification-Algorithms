@@ -1,6 +1,7 @@
 package de.ovgu.classification.parser;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -15,6 +16,14 @@ import java.util.stream.Collectors;
 public class Instances<T> implements Iterable<Instance<T>>{
 
     final List<Instance<T>> _instances = new ArrayList<>();
+    
+    public Instances() {
+    	
+    }
+    
+    public Instances(Instances<T> instances) {
+    	_instances.addAll(instances.getAll());
+    }
 
     /**
      * Adds given instance to collection.
@@ -24,6 +33,7 @@ public class Instances<T> implements Iterable<Instance<T>>{
     public void add(final Instance<T> instance) {
         _instances.add(instance);
     }
+    
 
     /**
      * Adds given instance constructed by given arguments and a weight of 1.
@@ -83,6 +93,18 @@ public class Instances<T> implements Iterable<Instance<T>>{
     @Override
     public Iterator<Instance<T>> iterator() {
         return _instances.iterator();
+    }
+    
+    /**
+     * Returns all instances as collection.
+     * @return
+     */
+    public Collection<Instance<T>> getAll() {
+    	return _instances;
+    }
+    
+    public void removeAll(Instances<T> instances) {
+    	_instances.removeAll(instances.getAll());
     }
 
 }
