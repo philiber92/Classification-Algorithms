@@ -12,6 +12,7 @@ import de.ovgu.classification.tree.BinaryClassADTree;
 import de.ovgu.classification.tree.BoostableADTree;
 import de.ovgu.classification.tree.PredictionNode;
 import de.ovgu.classification.tree.SplitterNode;
+import de.ovgu.classification.tree.BoostableADTree.BoostPredictionNode;
 import de.ovgu.classification.util.*;
 
 /**
@@ -39,6 +40,7 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
         _iterations = iterations;
         _conditions = new ArrayList<>();
         init();
+        boost();
     }
 
     private void init() {
@@ -70,14 +72,14 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     
     private void initConditions() {
     	int dimensions = _instances.countDimensions();
-    	int test = _instances.size();
+    	//int test = _instances.size();
     	for(Instance<Vector<Double>> instance : _instances) {
     		Vector<Double> instanceData = instance.getData();
     		for(int i = 0; i < dimensions; i++) {
     			_conditions.add(Condition.create(instanceData.get(i), i, Condition.ConditionType.GREATER));
     			_conditions.add(Condition.create(instanceData.get(i), i, Condition.ConditionType.LESS));
-    			_conditions.add(Condition.create(instanceData.get(i), i, Condition.ConditionType.GREATER_THAN));
-    			_conditions.add(Condition.create(instanceData.get(i), i, Condition.ConditionType.LESS_THAN));
+    			//_conditions.add(Condition.create(instanceData.get(i), i, Condition.ConditionType.GREATER_THAN));
+    			//_conditions.add(Condition.create(instanceData.get(i), i, Condition.ConditionType.LESS_THAN));
     		}
     	}
     }
@@ -85,6 +87,25 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     private void boost() {
     	for(int i = 0; i < _iterations; i++) {
     		addLeafToTree();
+    		updateWeights();
+    	}
+    	//test();
+    }
+    
+    private void test() {
+    	List<BoostableADTree<Vector<Double>, Double>.BoostPredictionNode> pre = new ArrayList<>();
+    	pre.add((BoostableADTree<Vector<Double>, Double>.BoostPredictionNode) _adTree.getRootPrediction().get());
+    	while(true) {
+    		if(pre.isEmpty())
+    			break;
+    		PredictionNode<Double> precon= pre.get(0);
+    		if(precon.hasSplitter()) {
+    			SplitterNode<Double> splitter = precon.getSplitter().get();
+    			System.out.println(splitter.getCondition().toString() + " " + splitter.getTruePrediction().getValue().toString() + " " + splitter.getFalsePrediction().getValue().toString());
+    			pre.add((BoostableADTree<Vector<Double>, Double>.BoostPredictionNode) splitter.getTruePrediction());
+    			pre.add((BoostableADTree<Vector<Double>, Double>.BoostPredictionNode) splitter.getFalsePrediction());
+    		}
+    		pre.remove(0);
     	}
     }
     
@@ -96,15 +117,18 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
 		for(BoostableADTree<Vector<Double>, Double>.BoostPredictionNode leaf : leaves) {
 	    	for(Condition condition : _conditions) {
 	    		leaf.setSplitter(_adTree.new BoostSplitterNode(condition, 0.0, 0.0));
-	    		if(calculateRating(leaf.getSplitter().get()) < z) {
+	    		double tmp = calculateRating(leaf.getSplitter().get());
+	    		if(tmp < z) {
 	    			minCondition = condition;
 	    			minPrediction = leaf;
+	    			z = tmp;
 	    		}
 	    		
 	    	}
 	    	leaf.removeSplitter();
 		}
 		setSplitterByCondition(minPrediction, minCondition);
+		_conditions.remove(minCondition);
     }
     
     private void setSplitterByCondition(PredictionNode<Double> node, Condition condition) {
@@ -115,8 +139,8 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	double negativeTrue = getNegativeWeightSum(result.getSecond());
     	double positiveFalse = getPositiveWeightSum(result.getSecond());
     	double negativeFalse =  getNegativeWeightSum(result.getSecond());
-    	double a1 = 0.5 * Math.exp((positiveTrue+1.0)/(negativeTrue+1.0));
-    	double a2 = 0.5 * Math.exp((positiveFalse+1.0)/(negativeFalse+1.0));
+    	double a1 = 0.5 * Math.log((positiveTrue+1.0)/(negativeTrue+1.0));
+    	double a2 = 0.5 * Math.log((positiveFalse+1.0)/(negativeFalse+1.0));
     	splitter.setTrueValue(a1);
     	splitter.setFalseValue(a2);
     }

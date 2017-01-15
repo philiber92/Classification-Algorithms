@@ -45,6 +45,11 @@ public class Condition {
     public static Condition create(double value, int dimensionIndex, ConditionType conditionType) {
     	return new Condition(value, dimensionIndex, conditionType);
     }
+    
+    @Override
+    public String toString() {
+    	return String.format("x%s %s", _dimensionIndex, _value);
+    }
 
 
 }

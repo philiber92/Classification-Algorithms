@@ -102,8 +102,8 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
          */
         private List<BoostPredictionNode> collectFreePredictions(final BoostPredictionNode predictionNode) {
             final ArrayList<BoostPredictionNode> list = new ArrayList<>();
-            if(hasSplitter()) {
-                final BoostSplitterNode splitter = (BoostSplitterNode) _splitter.get();
+            if(predictionNode.hasSplitter()) {
+                final BoostSplitterNode splitter = (BoostSplitterNode) predictionNode.getSplitter().get();
                 list.addAll(collectFreePredictions((BoostPredictionNode) splitter.getTruePrediction()));
                 list.addAll(collectFreePredictions((BoostPredictionNode) splitter.getFalsePrediction()));
                 return list;
