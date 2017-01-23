@@ -1,6 +1,9 @@
 package de.ovgu.classification.util;
 
 /**
+ * Represents small wrapper class which provides functionality to
+ * build and check simple conditions.
+ * 
  * @author Philipp Bergt
  */
 public class Condition {
@@ -17,12 +20,25 @@ public class Condition {
         LESS_THAN
     }
 
+    /**
+     * Constructs new instance of {@link Condition}.
+     * 
+     * @param value
+     * @param dimensionIndex
+     * @param conditionType
+     */
     public Condition(double value, int dimensionIndex, ConditionType conditionType) {
         _value = value;
         _dimensionIndex = dimensionIndex;
         _conditionType = conditionType;
     }
 
+    /**
+     * Runs conditions checks based on given double value.
+     * 
+     * @param arg
+     * @return
+     */
     public boolean check(double arg) {
         switch (_conditionType) {
             case GREATER:
@@ -38,10 +54,21 @@ public class Condition {
         }
     }
 
+    /**
+     * @return dimension index
+     */
     public int getDimension() {
         return _dimensionIndex;
     }
     
+    /**
+     * Creates new {@link Condition} 
+     * 
+     * @param value
+     * @param dimensionIndex
+     * @param conditionType
+     * @return
+     */
     public static Condition create(double value, int dimensionIndex, ConditionType conditionType) {
     	return new Condition(value, dimensionIndex, conditionType);
     }

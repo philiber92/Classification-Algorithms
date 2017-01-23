@@ -43,6 +43,9 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
         boost();
     }
 
+    /**
+     * Initializes all internal data structures.
+     */
     private void init() {
         _positiveLabel = _adTree.getPositiveLabel();
         _negativeLabel = _adTree.getNegativeLabel();
@@ -51,12 +54,18 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
         initConditions();
     }
 
+    /**
+     * Initializes all weights by formula 1.0/NUMBER_OF_INSTANCES.
+     */
     private void initWeights() {
         _weights = new HashMap<>();
         int numInstances = _instances.size();
         _instances.forEach(vectorInstance -> _weights.put(vectorInstance, 1.0/numInstances));
     }
 
+    /**
+     * Initializes classic AdaBoost algorithm by setting root node.
+     */
     private void initRootNode() {
         double positiveWeight = 0.0;
         double factor = 1.0/_instances.size();
@@ -70,6 +79,9 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
         _adTree.setRootPrediction(alpha);
     }
     
+	/**
+	* Initializes conditions by creating greater than and less than condition out of every data point.
+	*/
     private void initConditions() {
     	int dimensions = _instances.countDimensions();
     	//int test = _instances.size();
@@ -84,6 +96,9 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	}
     }
     
+    /**
+     * Starts boosting process.
+     */
     private void boost() {
     	for(int i = 0; i < _iterations; i++) {
     		addLeafToTree();
@@ -109,6 +124,9 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	}
     }
     
+    /**
+     * Adds a new splitter node to a leaf based on minimum z value.
+     */
     private void addLeafToTree() {
 		List<BoostableADTree<Vector<Double>, Double>.BoostPredictionNode> leaves = _adTree.getAllLeaves();
 		double z = Double.MAX_VALUE;
@@ -131,6 +149,12 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
 		_conditions.remove(minCondition);
     }
     
+    /**
+     * Adds splitter node to given {@lin PredictionNode} based on condition.
+     * 
+     * @param node
+     * @param condition
+     */
     private void setSplitterByCondition(PredictionNode<Double> node, Condition condition) {
 		node.setSplitter(_adTree.new BoostSplitterNode(condition, 0.0, 0.0));
 		SplitterNode<Double> splitter = node.getSplitter().get();
@@ -145,6 +169,12 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	splitter.setFalseValue(a2);
     }
     
+    /**
+     * Calculates z value for given {@link SplitterNode}.
+     * 
+     * @param splitter
+     * @return
+     */
     private double calculateRating(SplitterNode<Double> splitter) {
     	Tuple<Instances<Vector<Double>>, Instances<Vector<Double>>> result = _adTree.simulateSplitter(_instances, (BoostableADTree<Vector<Double>, Double>.BoostSplitterNode) splitter);
     	double positiveTrue = getPositiveWeightSum(result.getFirst());
@@ -157,6 +187,10 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	return 2 * (Math.sqrt(positiveTrue*negativeTrue) + Math.sqrt(positiveFalse*negativeFalse) + getWeightSum(remaining));
     }
 
+    /**
+     * Updates all weights by exponential function. It's necessary to call this method
+     * after each iteration.
+     */
     private void updateWeights() {
         for(Instance<Vector<Double>> instance : _instances) {
         	double value = _weights.get(instance);
@@ -166,6 +200,12 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
         }
     }
     
+    /**
+     * Calculates positive weight sum of all {@link Instances}.
+     * 
+     * @param instances
+     * @return
+     */
     private double getPositiveWeightSum(Instances<Vector<Double>> instances) {
     	double value = 0.0;
     	for(Instance<Vector<Double>> instance : instances) {
@@ -176,6 +216,12 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	return value;
     }
     
+    /**
+     * Calculates negative weight sum of all {@link Instances}.
+     * 
+     * @param instances
+     * @return
+     */
     private double getNegativeWeightSum(Instances<Vector<Double>> instances) {
     	double value = 0.0;
     	for(Instance<Vector<Double>> instance : instances) {
@@ -186,6 +232,12 @@ public class AdaBoost implements Boosting<Vector<Double>, Double>{
     	return value;
     }
     
+    /**
+     * Sums up both {@link #getNegativeWeightSum(Instances)} and {@link #getPositiveWeightSum(Instances)}.
+     * 
+     * @param instances
+     * @return
+     */
     private double getWeightSum(Instances<Vector<Double>> instances) {
     	return getPositiveWeightSum(instances) + getNegativeWeightSum(instances);
     }

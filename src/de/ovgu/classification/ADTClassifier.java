@@ -11,6 +11,12 @@ import weka.core.Instances;
 import weka.core.converters.ArffLoader.ArffReader;
 
 /**
+ * Simple alternating decision tree classifier algorithm. 
+ * Currently, only classic AdaBoost is implemented. 
+ * Thus the program is limited to binary class problems.
+ * 
+ * <b>Note</b>: Weka package is only used to parse arff data files.
+ * 
  * @author Philipp Bergt
  */
 public class ADTClassifier {
@@ -39,6 +45,14 @@ public class ADTClassifier {
         
     }
     
+    /**
+     * Copies weka parsed data to self provided data structures.
+     * If islabed isn't set, the class will be neglected.
+     * 
+     * @param instances
+     * @param isLabeled
+     * @return
+     */
     public static de.ovgu.classification.parser.Instances<Vector<Double>> getInstances(Instances instances, boolean isLabeled) {
     	de.ovgu.classification.parser.Instances<Vector<Double>> copyInstances = new de.ovgu.classification.parser.Instances<>();
     	int numAttributes = instances.numAttributes() - 1;
@@ -56,6 +70,12 @@ public class ADTClassifier {
     	return copyInstances;
     }
     
+    /**
+     * Gets all attributes from given {@link Instance}.
+     * 
+     * @param instance
+     * @return attributes as {@link Vector} containing doubles
+     */
     public static Vector<Double> getAttributes(Instance instance) {
     	final Vector<Double> attr = new Vector<>();
     	for(double value : instance.toDoubleArray()) {

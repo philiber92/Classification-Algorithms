@@ -51,7 +51,7 @@ public class Instance<T> {
     }
 
     /**
-     *
+     * sets label
      * @param label label
      */
     public void setLabel(int label) {

@@ -7,15 +7,11 @@ import de.ovgu.classification.parser.Instance;
 import de.ovgu.classification.parser.Instances;
 
 /**
- * Represents an adaption of classic
  *
  * @author Philipp Bergt
  */
 public class MultiClassADTree extends BoostableADTree<Vector<Double>, Vector<Double>> {
 
-    /**
-     *
-     */
     public MultiClassADTree() {
         super();
         boostStrategy = new LTBoost();

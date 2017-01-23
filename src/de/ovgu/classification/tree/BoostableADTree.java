@@ -9,6 +9,8 @@ import de.ovgu.classification.parser.Instances;
 import de.ovgu.classification.util.Condition;
 
 /**
+ * Represents an alternating decision tree which provides extensions to being boostable.
+ * 
  * @author Philipp Bergt
  */
 public abstract class BoostableADTree<Input, PredictionType> implements ADTree<Input, PredictionType>{
@@ -16,22 +18,48 @@ public abstract class BoostableADTree<Input, PredictionType> implements ADTree<I
     protected Optional<PredictionNode<PredictionType>> rootNode;
     protected Boosting<Input, PredictionType> boostStrategy;
 
+    /**
+     * Constructs new instance of {@link BoostableADTree} by setting 
+     * rootNode to null.
+     * 
+     */
     public BoostableADTree() {
         rootNode = Optional.empty();
     }
 
+    /**
+     * Constructs new instance of {@link BoostableADTree} by setting 
+     * rootNode to given {@link PredictionNode}.
+     * 
+     */
     public BoostableADTree(BoostPredictionNode predictionNode) {
         rootNode = Optional.of(predictionNode);
     }
 
+    /**
+     * Trains {@link BoostableADTree} to enable classifications.
+     * 
+     * @param instances
+     * @param iterations represents rounds of learning
+     */
     public abstract void train(Instances<Input> instances, int iterations);
 
+    /**
+     * Returns all leaves of {@link BoostableADTree}.
+     * 
+     * @return
+     */
     public List<BoostPredictionNode> getAllLeaves() {
         BoostPredictionNode predictionNode = (BoostPredictionNode) rootNode
                 .orElseThrow(() -> new RuntimeException("Tree isn't set!"));
         return predictionNode.getAllLeaves();
     }
 
+    /**
+     * Sets {@link Boosting} strategy to {@link BoostableADTree}.
+     * 
+     * @param boosting
+     */
     public void setBoostStrategy(Boosting<Input, PredictionType> boosting) {
         boostStrategy = boosting;
     }

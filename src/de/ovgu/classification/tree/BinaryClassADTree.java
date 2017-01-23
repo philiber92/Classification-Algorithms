@@ -49,6 +49,14 @@ public class BinaryClassADTree extends BoostableADTree<Vector<Double>, Double> {
         return value + simulateSplitter(root.getSplitter(), instance);
     }
     
+    /**
+     * Simulates given splitter based on a set of {@link Instances}. 
+     * Returns all true {@link Instance} and false ones as {@link Tuple}.
+     * 
+     * @param instances
+     * @param splitter
+     * @return
+     */
     public Tuple<Instances<Vector<Double>>, Instances<Vector<Double>>> simulateSplitter(Instances<Vector<Double>> instances, BoostSplitterNode splitter) {
     	final Instances<Vector<Double>> trueInstances = new Instances<>();
     	final Instances<Vector<Double>> falseInstances = new Instances<>();
@@ -85,14 +93,27 @@ public class BinaryClassADTree extends BoostableADTree<Vector<Double>, Double> {
         }
     }
 
+    /**
+     * @return label which was set as positive one
+     */
     public int getPositiveLabel() {
         return _positiveLabel;
     }
 
+    /**
+     * @return label which was set as negative one
+     */
     public int getNegativeLabel() {
         return _negativeLabel;
     }
 
+    /**
+     * Simulates given {@link SplitterNode} by sums up all related values of passed {@link PredictionNode}.
+     * 
+     * @param splitter
+     * @param instance
+     * @return sum of passed {@link PredictionNode}
+     */
     private double simulateSplitter(Optional<SplitterNode<Double>> splitter, Instance<Vector<Double>> instance) {
         if(!splitter.isPresent()) {
             return 0.0;

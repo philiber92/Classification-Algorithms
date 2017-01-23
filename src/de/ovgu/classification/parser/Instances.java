@@ -80,6 +80,11 @@ public class Instances<T> implements Iterable<Instance<T>>{
         return _instances.get(index);
     }
 
+    /**
+     * Collects all labels based on contained {@link Instance}.
+     * 
+     * @return {@link List} containing all labels
+     */
     public List<Integer> getLabels() {
         return _instances
                 .stream()
